@@ -1,0 +1,4 @@
+backend/.env
+frontend/.env.local
+backend/notes.txt
+frontend/notes.txt

@@ -1,0 +1,30 @@
+# --- FastAPI + Server ---
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# --- Database + ORM ---
+sqlalchemy>=2.0.29
+alembic>=1.13.1
+psycopg2-binary>=2.9.9
+
+# --- Environment variables ---
+python-dotenv>=1.0.1
+
+# --- HTTP requests ---
+requests>=2.31.0
+
+# --- Security / hashing (for future Google OAuth or user accounts) ---
+passlib[bcrypt]>=1.7.4
+
+# --- Pydantic (data validation) ---
+pydantic>=2.6.3
+pydantic-settings>=2.2.1
+
+# --- Google Gemini AI Client ---
+google-generativeai>=0.3.2
+
+# --- Optional utilities your code uses ---
+python-dateutil>=2.8.2
+
+python-jose 
+google-auth
