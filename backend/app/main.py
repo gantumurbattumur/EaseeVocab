@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api import words, crossword, auth
+from app.api import words, crossword, auth, mnemonic
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -17,6 +17,7 @@ app.add_middleware(
 app.include_router(words.router)
 app.include_router(crossword.router)
 app.include_router(auth.router)
+app.include_router(mnemonic.router)
 
 @app.get("/")
 def root():

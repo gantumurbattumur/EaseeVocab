@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ProtectedPage from "@/components/ProtectedPage";
 import { api } from "@/lib/api";
+import Flashcards from "@/components/Flashcards";
 
 export default function LearnPage() {
   const [words, setWords] = useState<any[]>([]);
@@ -12,11 +13,11 @@ export default function LearnPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // STEP 1 — Get current user
+        // STEP 1 — current user
         const userInfo = await api("/auth/me");
         setUser(userInfo);
 
-        // STEP 2 — Fetch daily word batch
+        // STEP 2 — fetch daily batch
         const data = await api("/words/daily", {
           method: "POST",
           body: JSON.stringify({
@@ -47,20 +48,8 @@ export default function LearnPage() {
 
   return (
     <ProtectedPage>
-      <div className="p-6 space-y-4">
-        <h1 className="text-xl font-bold">Today's Words</h1>
-
-        {words.length === 0 && <p>No words assigned today.</p>}
-
-        {words.map((w) => (
-          <div key={w.id} className="border rounded p-4 shadow-sm">
-            <div className="font-bold text-lg">{w.word}</div>
-            <div>{w.definition}</div>
-            <div className="text-gray-500 text-sm">
-              {w.translation_es} / {w.translation_fr}
-            </div>
-          </div>
-        ))}
+      <div className="min-h-screen flex justify-center items-center p-4">
+        <Flashcards words={words} />
       </div>
     </ProtectedPage>
   );
