@@ -1,3 +1,2 @@
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
+# Import Base from core.db to ensure single source of truth
+from app.core.db import Base
