@@ -9,7 +9,7 @@ export default function Navbar() {
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (token) {
-      setUser({}); // placeholder – real profile later
+      setUser({}); // User is logged in
     }
   }, []);
 
@@ -32,18 +32,8 @@ export default function Navbar() {
           <Link href="/crossword" className="hover:text-green-600">
             Crossword
           </Link>
-          <Link href="/explore" className="hover:text-green-600">
-            Explore
-          </Link>
 
-          {/* 🔥 Optional: Profile only if logged */}
-          {user && (
-            <Link href="/profile" className="hover:text-green-600">
-              Profile
-            </Link>
-          )}
-
-          {/* 🔥 Login / Logout */}
+          {/* Login / Logout */}
           {!user ? (
             <Link
               href="/login"

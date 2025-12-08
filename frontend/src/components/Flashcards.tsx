@@ -138,6 +138,7 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
         }),
       });
 
+      // Update card immediately with text (fast)
       const updated = [...cards];
       updated[index] = {
         ...card,
@@ -148,6 +149,23 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
           : undefined,
       };
       setCards(updated);
+      
+      // Store only text data in sessionStorage (not images - too large, causes quota errors)
+      // Images are already in the card state and will persist during component lifecycle
+      try {
+        const cacheKey = `mnemonic_text_${card.id}_${language}`;
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          mnemonic_word: data.mnemonic_word,
+          mnemonic_sentence: data.mnemonic_sentence,
+          // Don't store image_base64 - it's too large and causes quota errors
+        }));
+      } catch (e) {
+        // If storage fails, that's okay - images are in component state
+        console.warn("Could not cache mnemonic text:", e);
+      }
+      
+      // Flip automatically when mnemonic text is ready (image loads separately)
+      setFlipped(true);
 
       // Save to word history when mnemonic is generated
       const historyItem = {
@@ -223,9 +241,15 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
             <div className="flex flex-col items-center mb-6 pb-6 border-b-4 border-blue-200 w-full">
               {/* Selected Language Translation (Top) */}
               {translation ? (
-                <h1 className="text-4xl font-extrabold text-blue-600 mb-3">
-                  {translation}
-                </h1>
+                <>
+                  <h1 className="text-4xl font-extrabold text-blue-600 mb-2">
+                    {translation}
+                  </h1>
+                  {/* Pronunciation guide */}
+                  <p className="text-xs text-gray-500 font-medium mb-3">
+                    {getPronunciation(translation, language)}
+                  </p>
+                </>
               ) : (
                 <h1 className="text-4xl font-extrabold text-gray-400 mb-3">
                   No translation
@@ -251,6 +275,7 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
                 {card.definition}
               </p>
 
+              {/* Always show generate button - user can regenerate if needed */}
               <button
                 onClick={generateMnemonic}
                 disabled={loadingMnemonic || !translation}

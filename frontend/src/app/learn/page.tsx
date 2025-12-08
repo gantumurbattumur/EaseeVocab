@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import Flashcards, { FlashcardNavigation } from "@/components/Flashcards";
@@ -13,6 +13,9 @@ function LearnPageContent() {
   const [loading, setLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [wordsReady, setWordsReady] = useState(false);
+  const generatingRef = useRef(false);
+  const initialWordsRef = useRef<any[]>([]);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -46,11 +49,17 @@ function LearnPageContent() {
         const wordsData = data?.words || [];
         setWords(wordsData);
         
+        // Store initial words for reference
+        initialWordsRef.current = wordsData;
+        
         // Store words in localStorage for crossword to use
         localStorage.setItem("flashcard_words", JSON.stringify(wordsData));
+        
+        setWordsReady(true);
       } catch (err) {
         console.error("Error loading daily words:", err);
-        setWords([]); // Set empty array on error to prevent crashes
+        setWords([]);
+        setWordsReady(false);
       } finally {
         setLoading(false);
       }
@@ -58,6 +67,9 @@ function LearnPageContent() {
 
     loadData();
   }, [selectedLanguage]);
+
+  // Images are generated on-demand when user clicks "Generate Sound-a-like" button
+  // This provides better UX - no waiting, no storage quota issues
 
   if (!selectedLanguage) {
     return (

@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const handleLanguageSelect = (lang: "es" | "fr") => {
     setSelectedLanguage(lang);
     localStorage.setItem("learning_language", lang);
-    // Navigate to learn page with language
+    // Navigate immediately - no pre-generation to slow things down
     router.push(`/learn?lang=${lang}`);
   };
 
