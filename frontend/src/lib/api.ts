@@ -1,4 +1,13 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Get API base URL and ensure it has protocol
+let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// Ensure URL has protocol (fixes cases where env var is missing https://)
+if (API_BASE_URL && !API_BASE_URL.startsWith("http://") && !API_BASE_URL.startsWith("https://")) {
+  API_BASE_URL = `https://${API_BASE_URL}`;
+}
+
+// Remove trailing slash if present
+API_BASE_URL = API_BASE_URL.replace(/\/$/, "");
 
 export async function api(path: string, options: any = {}) {
   const token = localStorage.getItem("access_token");
@@ -13,7 +22,13 @@ export async function api(path: string, options: any = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  // Ensure path starts with /
+  const apiPath = path.startsWith("/") ? path : `/${path}`;
+  const fullUrl = `${API_BASE_URL}${apiPath}`;
+  
+  console.log(`🌐 API Call: ${fullUrl}`);
+
+  const res = await fetch(fullUrl, {
     ...options,
     headers,
   });
