@@ -141,19 +141,33 @@ async def generate_mnemonic(req: MnemonicRequest) -> MnemonicResponse:
 
     image_base64 = None
     try:
-        img_model = genai.GenerativeModel("gemini-2.5-flash-image")
+        print(f"🖼️ Generating image in combined endpoint for word: {req.word}")
+        img_model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        print(f"📝 Image prompt: {prompt_image[:100]}...")
         img_res = img_model.generate_content(prompt_image)
+        print(f"✅ Image generation response received")
 
         # Extract raw bytes from inline_data
         if img_res and img_res.parts:
+            print(f"📦 Checking {len(img_res.parts)} parts for image data")
             for part in img_res.parts:
                 if part.inline_data is not None:
                     raw_bytes = part.inline_data.data
                     image_base64 = base64.b64encode(raw_bytes).decode("utf-8")
+                    print(f"✅ Image extracted: {len(image_base64)} chars base64")
                     break
+            else:
+                print(f"⚠️ No inline_data found in response parts")
+                if hasattr(img_res, 'text') and img_res.text:
+                    print(f"📄 Response text: {img_res.text[:200]}")
+        else:
+            print(f"⚠️ No parts in response")
     except (google_exceptions.GoogleAPIError, Exception) as e:
-        # Image generation failure is not critical, continue without image
-        pass
+        # Image generation failure is not critical in combined endpoint
+        import logging
+        error_msg = f"Image generation failed (non-critical): {str(e)}"
+        logging.warning(error_msg)
+        print(f"⚠️ {error_msg}")
 
     return MnemonicResponse(
         mnemonic_word=mnemonic_word,
@@ -327,20 +341,55 @@ async def generate_mnemonic_image(
 
     image_base64 = None
     try:
-        img_model = genai.GenerativeModel("gemini-2.5-flash-image")
+        print(f"🖼️ Generating image for word: {req.word}")
+        # Try gemini-2.0-flash-exp first (supports image generation)
+        # If that fails, we'll try other models
+        try:
+            img_model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        except Exception as model_err:
+            print(f"⚠️ Model gemini-2.0-flash-exp not available, trying alternatives: {model_err}")
+            # Fallback to gemini-pro-vision or gemini-1.5-flash
+            try:
+                img_model = genai.GenerativeModel("gemini-1.5-flash")
+            except:
+                img_model = genai.GenerativeModel("gemini-pro")
+        
+        print(f"📝 Image prompt: {prompt_image[:100]}...")
         img_res = img_model.generate_content(prompt_image)
+        print(f"✅ Image generation response received, type: {type(img_res)}")
 
         # Extract raw bytes from inline_data
         if img_res and img_res.parts:
-            for part in img_res.parts:
+            print(f"📦 Checking {len(img_res.parts)} parts for image data")
+            for i, part in enumerate(img_res.parts):
+                print(f"  Part {i}: has inline_data={part.inline_data is not None}")
                 if part.inline_data is not None:
                     raw_bytes = part.inline_data.data
                     image_base64 = base64.b64encode(raw_bytes).decode("utf-8")
+                    print(f"✅ Image extracted: {len(image_base64)} chars base64")
                     break
+            else:
+                print(f"⚠️ No inline_data found in response parts")
+                # Try alternative: check for text containing base64 or other formats
+                if hasattr(img_res, 'text') and img_res.text:
+                    print(f"📄 Response text: {img_res.text[:200]}")
+        else:
+            print(f"⚠️ No parts in response, response: {img_res}")
+            
+        if not image_base64:
+            raise ValueError("Image generation returned no image data")
+            
     except (google_exceptions.GoogleAPIError, Exception) as e:
-        # Image generation failure is not critical, continue without image
+        # Image generation failure - log and raise
         import logging
-        logging.warning(f"Image generation failed: {str(e)}")
+        error_msg = f"Image generation failed: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        print(f"❌ {error_msg}")
+        print(f"❌ Exception type: {type(e).__name__}")
+        raise HTTPException(
+            status_code=503,
+            detail=error_msg
+        )
     
     # Update cache with image
     if image_base64:
