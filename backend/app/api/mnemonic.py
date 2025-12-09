@@ -96,10 +96,7 @@ async def generate_mnemonic(req: MnemonicRequest) -> MnemonicResponse:
 
     try:
         model = genai.GenerativeModel("gemini-2.5-flash")
-        text_res = model.generate_content(
-            model="gemini-2.5-flash",
-            contents=[prompt_text]
-        )
+        text_res = model.generate_content(contents=[prompt_text])
     except (google_exceptions.GoogleAPIError, Exception) as e:
         raise HTTPException(
             status_code=503,
@@ -216,10 +213,7 @@ async def generate_mnemonic_text(
 
     try:
         model = genai.GenerativeModel("gemini-2.5-flash")
-        text_res = model.generate_content(
-            model="gemini-2.5-flash",
-            contents=[prompt_text]
-        )
+        text_res = model.generate_content(contents=[prompt_text])
     except (google_exceptions.GoogleAPIError, Exception) as e:
         raise HTTPException(
             status_code=503,
