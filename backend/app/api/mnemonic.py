@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-from google import genai
+import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
 from sqlalchemy.orm import Session
 import base64
