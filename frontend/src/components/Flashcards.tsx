@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {useRouter} from "next/navigation";
 import { api } from "@/lib/api";
+import ErrorToast from "./ErrorToast";
 
 type Language = "es" | "fr";
 
@@ -41,7 +42,9 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
   };
   const [flipped, setFlipped] = useState(false);
   const [loadingMnemonic, setLoadingMnemonic] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   const [crosswordMode, setCrosswordMode] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
   // Load words
@@ -121,20 +124,20 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
     e.stopPropagation(); // prevents flip
 
     if (!translation) {
-      alert(`No ${language === "es" ? "Spanish" : "French"} translation available for this word.`);
+      setError(`No ${language === "es" ? "Spanish" : "French"} translation available for this word.`);
       return;
     }
 
     setLoadingMnemonic(true);
 
     try {
-      // Generate mnemonic for the translation word (not English)
-      // Use translation as the word and English definition
-      const data = await api("/mnemonic/generate", {
+      // Step 1: Generate text first (fast, ~2 seconds)
+      const textData = await api("/mnemonic/generate-text", {
         method: "POST",
         body: JSON.stringify({
           word: translation, // The foreign language word
           definition: card.definition, // English definition
+          language: language, // Pass language for caching
         }),
       });
 
@@ -142,40 +145,38 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
       const updated = [...cards];
       updated[index] = {
         ...card,
-        mnemonic_word: data.mnemonic_word,
-        mnemonic_sentence: data.mnemonic_sentence,
-        image_url: data.image_base64 
-          ? `data:image/png;base64,${data.image_base64}`
-          : undefined,
+        mnemonic_word: textData.mnemonic_word,
+        mnemonic_sentence: textData.mnemonic_sentence,
+        // Image will be added separately
       };
       setCards(updated);
       
-      // Store only text data in sessionStorage (not images - too large, causes quota errors)
-      // Images are already in the card state and will persist during component lifecycle
+      // Store text data in sessionStorage
       try {
         const cacheKey = `mnemonic_text_${card.id}_${language}`;
         sessionStorage.setItem(cacheKey, JSON.stringify({
-          mnemonic_word: data.mnemonic_word,
-          mnemonic_sentence: data.mnemonic_sentence,
-          // Don't store image_base64 - it's too large and causes quota errors
+          mnemonic_word: textData.mnemonic_word,
+          mnemonic_sentence: textData.mnemonic_sentence,
         }));
       } catch (e) {
-        // If storage fails, that's okay - images are in component state
         console.warn("Could not cache mnemonic text:", e);
       }
       
-      // Flip automatically when mnemonic text is ready (image loads separately)
+      // Flip automatically when mnemonic text is ready
       setFlipped(true);
+      setLoadingMnemonic(false); // Text generation complete
 
       // Save to word history when mnemonic is generated
       const historyItem = {
         word: card.word,
         translation: translation,
         definition: card.definition,
-        language: language === "es" ? "Spanish" : "French",
+        language: language === "es" ? "Spanish" : "French", // Keep display name for UI
+        languageCode: language, // Store code for API lookup
         date: new Date().toISOString(),
       };
       
+      // Save to localStorage (always, for guest users and fallback)
       const existingHistory = localStorage.getItem("word_history");
       let history = existingHistory ? JSON.parse(existingHistory) : [];
       
@@ -191,16 +192,51 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
           history = history.slice(0, 100);
         }
         localStorage.setItem("word_history", JSON.stringify(history));
+        
+        // If user is logged in, try to sync with backend (non-blocking)
+        const token = localStorage.getItem("access_token");
+        if (token) {
+          // Note: Backend API endpoint for word history sync would go here
+          // For now, we keep localStorage as the source of truth
+          // This can be implemented when backend endpoint is ready
+        }
       }
 
-      // Flip automatically when mnemonic is ready
-      setFlipped(true);
+      // Step 2: Generate image separately (slower, ~8 seconds)
+      setGeneratingImage(true);
+      
+      try {
+        const imageData = await api("/mnemonic/generate-image", {
+          method: "POST",
+          body: JSON.stringify({
+            word: translation,
+            definition: card.definition,
+            mnemonic_sentence: textData.mnemonic_sentence,
+            language: language,
+          }),
+        });
+
+        // Update card with image when ready
+        const updatedWithImage = [...cards];
+        updatedWithImage[index] = {
+          ...updated[index],
+          image_url: imageData.image_base64 
+            ? `data:image/png;base64,${imageData.image_base64}`
+            : undefined,
+        };
+        setCards(updatedWithImage);
+      } catch (imgErr) {
+        console.error("Image generation error:", imgErr);
+        // Image generation failure is not critical, continue without image
+      } finally {
+        setGeneratingImage(false);
+      }
     } catch (err) {
       console.error("Mnemonic error:", err);
-      alert("Failed to generate mnemonic. Please try again.");
+      setError("Failed to generate mnemonic. Please try again.");
+      setLoadingMnemonic(false);
+      setGeneratingImage(false);
     }
-
-    setLoadingMnemonic(false);
   }
 
   // Generate pronunciation guide (simple syllable splitting)
@@ -223,9 +259,10 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
+      {error && <ErrorToast message={error} onClose={() => setError(null)} />}
       {/* ===== CARD WRAPPER (handles 3D flip) ===== */}
       <div
-        className="relative w-[480px] h-[580px] cursor-pointer perspective"
+        className="relative w-[480px] h-[580px] md:w-[550px] md:h-[660px] lg:w-[650px] lg:h-[780px] xl:w-[750px] xl:h-[900px] 2xl:w-[850px] 2xl:h-[1020px] cursor-pointer perspective"
         onClick={() => setFlipped(!flipped)}
       >
         <div
@@ -235,27 +272,27 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
         >
           {/* ===== FRONT ===== */}
           <div
-            className="absolute inset-0 bg-white rounded-2xl shadow-xl px-8 py-10 flex flex-col items-center justify-center backface-hidden overflow-hidden"
+            className="absolute inset-0 bg-white rounded-2xl shadow-xl px-8 py-10 md:px-10 md:py-12 lg:px-12 lg:py-14 xl:px-14 xl:py-16 2xl:px-16 2xl:py-[72px] flex flex-col items-center justify-center backface-hidden overflow-hidden"
           >
             {/* Spanish/French Section - Top Half */}
-            <div className="flex flex-col items-center mb-6 pb-6 border-b-4 border-blue-200 w-full">
+            <div className="flex flex-col items-center mb-6 pb-6 border-b-4 border-rose-200 dark:border-rose-700 w-full">
               {/* Selected Language Translation (Top) */}
               {translation ? (
                 <>
-                  <h1 className="text-4xl font-extrabold text-blue-600 mb-2">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold text-rose-600 dark:text-rose-400 mb-2">
                     {translation}
                   </h1>
                   {/* Pronunciation guide */}
-                  <p className="text-xs text-gray-500 font-medium mb-3">
+                  <p className="text-xs md:text-sm lg:text-base text-gray-500 dark:text-gray-400 font-medium mb-3">
                     {getPronunciation(translation, language)}
                   </p>
                 </>
               ) : (
-                <h1 className="text-4xl font-extrabold text-gray-400 mb-3">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold text-gray-400 dark:text-gray-500 mb-3">
                   No translation
                 </h1>
               )}
-              <p className="text-xs text-blue-500 font-semibold uppercase tracking-wide">
+              <p className="text-xs md:text-sm lg:text-base text-rose-500 dark:text-rose-400 font-semibold uppercase tracking-wide">
                 {language === "es" ? "Spanish" : "French"}
               </p>
             </div>
@@ -263,40 +300,44 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
             {/* English Section - Bottom Half */}
             <div className="flex flex-col items-center">
               {/* English Word (Middle) */}
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-gray-800 mb-2">
                 {card.word}
               </h2>
-              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-3">
+              <p className="text-xs md:text-sm lg:text-base text-gray-500 font-semibold uppercase tracking-wide mb-3">
                 English
               </p>
 
               {/* English Definition (Bottom) */}
-              <p className="text-center text-gray-700 text-base max-w-[320px] leading-relaxed mb-4">
+              <p className="text-center text-gray-700 text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl max-w-[320px] md:max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] 2xl:max-w-[700px] leading-relaxed mb-4">
                 {card.definition}
               </p>
 
               {/* Always show generate button - user can regenerate if needed */}
               <button
                 onClick={generateMnemonic}
-                disabled={loadingMnemonic || !translation}
-                className="px-5 py-2 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm"
+                disabled={(loadingMnemonic || generatingImage) || !translation}
+                className="px-5 py-2 md:px-6 md:py-3 lg:px-7 lg:py-3 xl:px-8 xl:py-4 2xl:px-10 2xl:py-5 bg-pink-200 dark:bg-pink-300 text-gray-900 dark:text-gray-900 rounded-xl shadow hover:bg-pink-300 dark:hover:bg-pink-400 border border-pink-300 dark:border-pink-400 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl transition-all"
               >
-                {loadingMnemonic ? "Generating…" : "Generate Sound-a-like"}
+                {generatingImage 
+                  ? "Generating image…" 
+                  : loadingMnemonic 
+                    ? "Generating text…" 
+                    : "Generate Sound-a-like"}
               </button>
             </div>
           </div>
 
           {/* ===== BACK ===== */}
           <div
-            className="absolute inset-0 bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center justify-center rotate-y-180 backface-hidden overflow-hidden"
+            className="absolute inset-0 bg-white rounded-2xl shadow-xl px-8 py-8 md:px-10 md:py-10 lg:px-12 lg:py-12 xl:px-14 xl:py-14 2xl:px-16 2xl:py-16 flex flex-col items-center justify-center rotate-y-180 backface-hidden overflow-hidden"
           >
             {/* Translated word with pronunciation guide */}
             {translation && (
               <div className="w-full flex items-center justify-between mb-4">
-                <p className="text-5xl font-extrabold text-blue-600">
+                <p className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-extrabold text-rose-600 dark:text-rose-400">
                   {translation}
                 </p>
-                <p className="text-xs text-gray-500 font-medium">
+                <p className="text-xs md:text-sm lg:text-base text-gray-500 dark:text-gray-400 font-medium">
                   {getPronunciation(translation, language)}
                 </p>
               </div>
@@ -305,32 +346,48 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
             {/* Sound-a-like word */}
             {card.mnemonic_word && (
               <div className="mb-4 w-full">
-                <p className="text-gray-700 text-base text-center">
+                <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-center">
                   <span className="font-semibold">Sound-a-like:</span>{" "}
-                  <span className="text-2xl font-bold text-purple-600">
+                  <span className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-rose-600 dark:text-rose-400">
                     "{card.mnemonic_word}"
                   </span>
                 </p>
               </div>
             )}
 
-            {/* Large Image - Fills most of the space */}
-            {card.image_url && (
-              <div className="flex-1 w-full flex items-center justify-center mb-3 min-h-0">
-                <img
-                  src={card.image_url}
-                  className="w-full h-full max-w-full max-h-[420px] object-contain rounded-xl shadow"
-                  alt="Sound-a-like word illustration"
-                />
-              </div>
-            )}
-
-            {/* Mnemonic sentence at bottom */}
+            {/* Mnemonic sentence above image */}
             {card.mnemonic_sentence && (
-              <p className="text-center text-gray-700 text-sm max-w-[400px] leading-relaxed">
+              <p className="text-center text-gray-700 dark:text-gray-300 text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl max-w-[400px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] 2xl:max-w-[800px] leading-relaxed mb-4">
                 {card.mnemonic_sentence}
               </p>
             )}
+
+            {/* Large Image - Fills most of the space */}
+            {card.image_url ? (
+              <div className="flex-1 w-full flex items-center justify-center mb-3 min-h-0">
+                <img
+                  src={card.image_url}
+                  className="w-full h-full max-w-full max-h-[420px] md:max-h-[500px] lg:max-h-[600px] xl:max-h-[700px] 2xl:max-h-[800px] object-contain rounded-xl shadow image-fade-in"
+                  alt="Sound-a-like word illustration"
+                />
+              </div>
+            ) : generatingImage ? (
+              <div className="flex-1 w-full flex flex-col items-center justify-center mb-3 min-h-0 bg-gradient-to-br from-gray-50 to-rose-50 dark:from-gray-800 dark:to-rose-900/20 rounded-xl border-2 border-dashed border-rose-300 dark:border-rose-600">
+                <div className="flex flex-col items-center gap-3 px-4">
+                  {/* Animated spinner */}
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 border-4 border-rose-200 dark:border-rose-700 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-rose-600 dark:border-rose-400 rounded-full border-t-transparent animate-spin"></div>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm font-semibold animate-pulse">
+                    🎨 Generating image...
+                  </p>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs text-center max-w-[220px] leading-relaxed">
+                    Creating a visual memory aid for you
+                  </p>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -360,26 +417,26 @@ export function FlashcardNavigation({
       <button
         onClick={onPrev}
         disabled={index === 0}
-        className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-all"
+        className="px-6 py-3 bg-pink-200 dark:bg-pink-300 text-gray-900 dark:text-gray-900 rounded-xl shadow-md hover:bg-pink-300 dark:hover:bg-pink-400 border border-pink-300 dark:border-pink-400 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-all"
       >
         ◀ Prev
       </button>
 
-      <span className="text-gray-800 font-bold text-lg min-w-[80px] text-center">
+      <span className="text-gray-800 dark:text-gray-200 font-bold text-lg min-w-[80px] text-center">
         {index + 1} / {total}
       </span>
 
       {isLast ? (
         <button
           onClick={onCrossword}
-          className="px-6 py-3 bg-green-600 text-white rounded-xl shadow-md hover:bg-green-700 font-semibold transition-all"
+          className="px-6 py-3 bg-pink-200 dark:bg-pink-300 text-gray-900 dark:text-gray-900 rounded-xl shadow-md hover:bg-pink-300 dark:hover:bg-pink-400 border border-pink-300 dark:border-pink-400 font-semibold transition-all"
         >
           Crossword →
         </button>
       ) : (
         <button
           onClick={onNext}
-          className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 font-semibold transition-all"
+          className="px-6 py-3 bg-pink-200 dark:bg-pink-300 text-gray-900 dark:text-gray-900 rounded-xl shadow-md hover:bg-pink-300 dark:hover:bg-pink-400 border border-pink-300 dark:border-pink-400 font-semibold transition-all"
         >
           Next ▶
         </button>

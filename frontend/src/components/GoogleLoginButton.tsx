@@ -59,12 +59,12 @@ export default function GoogleLoginButton() {
         callback: authenticateWithGoogle,
       });
 
-      const buttonElement = document.getElementById("google-login");
+      const buttonElement = document.getElementById("google-login-sidebar");
       if (buttonElement) {
         window.google.accounts.id.renderButton(buttonElement, {
           theme: "outline",
           size: "large",
-          width: "280",
+          width: "100%",
         });
       }
     } catch (error) {
@@ -80,5 +80,5 @@ export default function GoogleLoginButton() {
     );
   }
 
-  return <div id="google-login" />;
+  return <div id="google-login-sidebar" className="w-full" />;
 }

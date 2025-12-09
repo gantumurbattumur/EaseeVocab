@@ -7,11 +7,13 @@ import Flashcards, { FlashcardNavigation } from "@/components/Flashcards";
 import Sidebar from "@/components/Sidebar";
 
 type Language = "es" | "fr" | null;
+type Level = "a1" | "a2" | "b1" | "b2" | null;
 
 function LearnPageContent() {
   const [words, setWords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(null);
+  const [selectedLevel, setSelectedLevel] = useState<Level>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [wordsReady, setWordsReady] = useState(false);
   const generatingRef = useRef(false);
@@ -20,10 +22,14 @@ function LearnPageContent() {
   const router = useRouter();
 
   useEffect(() => {
-    // Get language from URL params or localStorage
+    // Get language and level from URL params or localStorage
     const langParam = searchParams.get("lang") as Language;
+    const levelParam = searchParams.get("level") as Level;
     const savedLang = localStorage.getItem("learning_language") as Language;
+    const savedLevel = localStorage.getItem("learning_level") as Level;
+    
     const lang = langParam || (savedLang && (savedLang === "es" || savedLang === "fr") ? savedLang : null);
+    const level = levelParam || (savedLevel && (savedLevel === "a1" || savedLevel === "a2" || savedLevel === "b1" || savedLevel === "b2") ? savedLevel : null);
     
     if (lang) {
       setSelectedLanguage(lang);
@@ -33,15 +39,28 @@ function LearnPageContent() {
       router.push("/dashboard");
       return;
     }
+    
+    if (level) {
+      setSelectedLevel(level);
+      localStorage.setItem("learning_level", level);
+    } else {
+      // No level selected, redirect to dashboard
+      router.push("/dashboard");
+      return;
+    }
   }, [searchParams, router]);
 
   useEffect(() => {
-    if (!selectedLanguage) return;
+    if (!selectedLanguage || !selectedLevel) return;
 
     const loadData = async () => {
       try {
         const data = await api("/words/daily", {
-          method: "POST"
+          method: "POST",
+          body: JSON.stringify({
+            level: selectedLevel,
+            limit: 10,
+          }),
         });
 
         // backend returns DailyWordsResponse with { date, count, words }
@@ -66,19 +85,19 @@ function LearnPageContent() {
     };
 
     loadData();
-  }, [selectedLanguage]);
+  }, [selectedLanguage, selectedLevel]);
 
   // Images are generated on-demand when user clicks "Generate Sound-a-like" button
   // This provides better UX - no waiting, no storage quota issues
 
-  if (!selectedLanguage) {
+  if (!selectedLanguage || !selectedLevel) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-800">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Please select a language first</p>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">Please select a language and level first</p>
           <a
             href="/dashboard"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-6 py-2 bg-pink-200 dark:bg-pink-300 text-gray-900 dark:text-gray-900 rounded-lg hover:bg-pink-300 dark:hover:bg-pink-400 border border-pink-300 dark:border-pink-400 transition-colors font-semibold"
           >
             Go to Dashboard
           </a>
@@ -98,13 +117,13 @@ function LearnPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-white dark:bg-slate-800">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 ml-64 p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl xl:max-w-[90rem] 2xl:max-w-[100rem] mx-auto">
           {/* Flashcards Section */}
           <div className="flex justify-center items-start gap-8">
             {/* Left: Flashcards */}
@@ -141,45 +160,25 @@ function LearnPageContent() {
                   </div>
                 </div>
 
-                {/* How to Use */}
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    <span>📖</span> How to Use
-                  </h3>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-1">•</span>
-                      <span>
-                        Click the card to flip and see the sound-a-like word
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-1">•</span>
-                      <span>
-                        Click "Generate Sound-a-like Word" to create a memory aid
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-1">•</span>
-                      <span>
-                        Use the sound-a-like word and image to remember
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-
                 {/* Language Info */}
                 <div className="text-sm text-gray-600">
                   <p>
                     <span className="font-semibold">Learning:</span>{" "}
-                    {selectedLanguage === "es" ? "Spanish → English" : "French → English"}
-                  </p>
-                  <p className="mt-1">
-                    The flashcard shows the{" "}
-                    {selectedLanguage === "es" ? "Spanish" : "French"} word
-                    separated from English, helping you memorize it through sound-a-like words.
+                    {selectedLanguage === "es" ? "Spanish" : "French"} → English
                   </p>
                 </div>
+
+                {/* Completion Message */}
+                {currentIndex === words.length - 1 && words.length === 10 && (
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                    <h3 className="font-semibold text-gray-800 mb-2">
+                      Great Job!
+                    </h3>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      Once you've completed all 10 flashcards for today, play the crossword to ensure your memorization!
+                    </p>
+                  </div>
+                )}
 
                 {/* Navigation Buttons at Bottom */}
                 <div className="mt-auto">

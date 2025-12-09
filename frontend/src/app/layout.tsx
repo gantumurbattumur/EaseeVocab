@@ -1,7 +1,8 @@
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 import Script from "next/script";
 import React from "react";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata = {
   title: "EaseeVocab",
@@ -28,8 +29,11 @@ export default function RootLayout({
           src="https://accounts.google.com/gsi/client"
           strategy="lazyOnload"
         />
-        <Navbar />
-        <main className="pt-16 min-h-screen">{children}</main>
+        <ThemeProvider>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );

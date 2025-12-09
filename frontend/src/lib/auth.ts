@@ -1,10 +1,12 @@
 "use client";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function authenticateWithGoogle(response: { credential: string }) {
   const id_token = response.credential;
 
   try {
-    const res = await fetch("http://localhost:8000/auth/google/verify", {
+    const res = await fetch(`${API_BASE_URL}/auth/google/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id_token }),
@@ -13,8 +15,7 @@ export async function authenticateWithGoogle(response: { credential: string }) {
     if (!res.ok) {
       const errorText = await res.text();
       console.error("Login failed:", errorText);
-      alert("Login failed. Please try again.");
-      return;
+      throw new Error("Login failed. Please try again.");
     }
 
     const data = await res.json();
@@ -26,6 +27,6 @@ export async function authenticateWithGoogle(response: { credential: string }) {
     window.location.href = "/dashboard";
   } catch (error) {
     console.error("Authentication error:", error);
-    alert("An error occurred during login. Please try again.");
+    throw error;
   }
 }

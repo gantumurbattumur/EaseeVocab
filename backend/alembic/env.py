@@ -28,6 +28,7 @@ from app.models.base import Base
 import app.models.user
 import app.models.vocabulary
 import app.models.mnemonic
+import app.models.mnemonic_cache
 import app.models.user_word_history
 import app.models.crossword
 import app.models.crossword_attempts

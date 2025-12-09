@@ -1,3 +1,5 @@
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function api(path: string, options: any = {}) {
   const token = localStorage.getItem("access_token");
 
@@ -11,7 +13,7 @@ export async function api(path: string, options: any = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`http://localhost:8000${path}`, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
   });
