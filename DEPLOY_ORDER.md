@@ -91,8 +91,8 @@ CORS_ORIGINS=*  # Will update after frontend deploys
 
 #### 2.4 Verify Build Settings
 **Settings** → **Build**:
-- Build Command: `pip install -r requirements.txt && alembic upgrade head`
-- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Build Command: `pip install -r requirements.txt` (migrations run at startup, not during build)
+- Start Command: `./start.sh` (runs migrations then starts server)
 
 #### 2.5 Deploy
 - Railway will auto-deploy
