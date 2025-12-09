@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: easeevocab-backend
+    env: python
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+databases:
+  - name: easeevocab-db
+    plan: free
+    databaseName: easeevocab
+    user: easeevocab
+
