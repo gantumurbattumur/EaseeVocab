@@ -256,23 +256,9 @@ export default function Sidebar() {
         {/* Auth Buttons */}
         <div className="flex flex-col gap-2">
           {!isAuthenticated ? (
-            <>
-              <div className="px-4 py-2">
-                <GoogleLoginButton />
-              </div>
-              <Link
-                href="/login"
-                className="px-4 py-2 bg-gradient-to-r from-amber-200 to-yellow-200 dark:bg-amber-600 text-rose-800 dark:text-gray-100 rounded-lg text-center font-semibold text-base hover:from-amber-300 hover:to-yellow-300 dark:hover:bg-amber-700 transition-all shadow-md hover:shadow-lg"
-              >
-                ✨ Sign Up
-              </Link>
-              <Link
-                href="/login"
-                className="px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 dark:bg-gray-700 text-white rounded-lg text-center font-semibold text-base hover:from-rose-500 hover:to-pink-500 dark:hover:bg-gray-600 transition-all shadow-md hover:shadow-lg"
-              >
-                🔑 Log In
-              </Link>
-            </>
+            <div className="px-4 py-2">
+              <GoogleLoginButton />
+            </div>
           ) : (
             <Link
               href="/dashboard"
@@ -281,15 +267,6 @@ export default function Sidebar() {
               🏠 Dashboard
             </Link>
           )}
-        </div>
-
-        {/* Language Selector */}
-        <div className="flex items-center gap-2 text-base">
-          <span className="text-rose-700 dark:text-gray-300">🌐 Language:</span>
-          <select className="flex-1 px-2 py-1 bg-white/80 dark:bg-gray-700/80 border border-rose-200 dark:border-gray-600 rounded-lg text-rose-800 dark:text-gray-100 text-base focus:outline-none focus:ring-2 focus:ring-rose-300 dark:focus:ring-amber-600">
-            <option className="bg-white dark:bg-gray-800">English</option>
-            <option className="bg-white dark:bg-gray-800">Монгол</option>
-          </select>
         </div>
 
         {/* Support Links */}
