@@ -18,8 +18,6 @@ async def trigger_pre_generation(
     """
     Trigger pre-generation of mnemonics for all language/level combinations.
     This runs in the background to avoid blocking the request.
-    
-    Note: This endpoint should be protected in production (add auth check).
     """
     try:
         # Run pre-generation in background

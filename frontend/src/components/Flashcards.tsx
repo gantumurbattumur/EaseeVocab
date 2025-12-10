@@ -266,12 +266,10 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
         }
         localStorage.setItem("word_history", JSON.stringify(history));
         
-        // If user is logged in, try to sync with backend (non-blocking)
+        // Sync with backend if user is logged in (non-blocking)
         const token = localStorage.getItem("access_token");
         if (token) {
-          // Note: Backend API endpoint for word history sync would go here
-          // For now, we keep localStorage as the source of truth
-          // This can be implemented when backend endpoint is ready
+          // Backend sync can be added here when endpoint is ready
         }
       }
 

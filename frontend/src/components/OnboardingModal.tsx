@@ -76,17 +76,17 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
             </div>
           )}
 
-          {/* Step 2: Memory Techniques */}
+          {/* Step 2: Mnemonic Technique */}
           {step === 2 && (
             <div className="text-center animate-fadeIn">
               <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <span className="text-4xl">🧠</span>
               </div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                Memory Palace Technique
+                Mnemonic Technique
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                Learn through sound-a-like words and AI-generated visual mnemonics that help you remember faster.
+                Learn through sound-a-like words and visual stories that help you remember faster.
               </p>
               <div className="space-y-4 mb-6">
                 <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 text-left">
@@ -95,16 +95,16 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                     <h3 className="font-bold text-gray-900 dark:text-gray-100">Sound-a-like Words</h3>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 ml-9">
-                    "Plato" sounds like "plate-o" - a plate with an O!
+                    Connect new words to familiar sounds. "Plato" sounds like "plate-o" - a plate with an O!
                   </p>
                 </div>
                 <div className="bg-pink-50 dark:bg-pink-900/20 rounded-xl p-4 text-left">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-2xl">🖼️</span>
-                    <h3 className="font-bold text-gray-900 dark:text-gray-100">AI-Generated Images</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100">Visual Stories</h3>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 ml-9">
-                    Visual memory aids created by AI to make learning unforgettable
+                    Generated images create abstract visual stories that connect the sound-a-like word to its meaning
                   </p>
                 </div>
               </div>
@@ -121,7 +121,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                 Practice & Review
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                After learning words, test yourself with fun crossword puzzles. Track your progress and build streaks!
+                Review memorized words using crossword puzzles and other interactive games. Track your progress and build streaks!
               </p>
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
@@ -131,8 +131,8 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
                   <div className="text-3xl mb-2">🧩</div>
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">Practice</h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">Crossword puzzles</p>
+                  <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">Review</h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Crossword & puzzles</p>
                 </div>
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4">
                   <div className="text-3xl mb-2">🔥</div>

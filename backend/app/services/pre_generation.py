@@ -180,7 +180,6 @@ async def pre_generate_for_combination(
     
     # Get deterministic words
     # Pre-generate first 10 words (increased from 3 for better initial UX)
-    # TODO: After first week, reduce back to 3 to save costs
     words = get_deterministic_words(db, language, level, limit=10)
     
     if not words:

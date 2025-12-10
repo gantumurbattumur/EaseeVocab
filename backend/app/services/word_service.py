@@ -87,6 +87,4 @@ def assign_daily_words(
         )
 
     db.add_all(entries)
-    # Note: commit is handled at API layer for transaction control
-
     return words

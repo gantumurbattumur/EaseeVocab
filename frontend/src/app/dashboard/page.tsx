@@ -281,7 +281,7 @@ export default function DashboardPage() {
                           <div className="mb-4 w-full h-48 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
                             <div className="text-gray-600 text-center">
                               <div className="text-2xl mb-2 font-semibold">Image</div>
-                              <p className="text-sm">AI-Generated Visual Aid</p>
+                              <p className="text-sm">Visual Memory Aid</p>
                             </div>
                           </div>
                         ) : (
@@ -330,10 +330,10 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                          AI-Generated Images
+                          Visual Stories
                         </h3>
                         <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
-                          Visual memory aids created by AI to help you remember words faster and more effectively.
+                          Visual stories created to help you remember words faster and more effectively.
                         </p>
                       </div>
                     </div>

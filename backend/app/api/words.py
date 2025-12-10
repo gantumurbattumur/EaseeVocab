@@ -90,9 +90,7 @@ def get_daily_words(
     if user is None:
         print(f"👤 Guest mode: fetching {limit} words at level {level}")
         
-        # Get language from request if available, default to 'es'
-        # Note: The frontend should pass language in the request
-        # For now, we'll use a default, but deterministic words are same regardless of language
+        # Deterministic words are same regardless of language
         # (the mnemonics are language-specific, but the English words are the same)
         from app.services.pre_generation import get_deterministic_words
         
