@@ -335,7 +335,7 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
       {error && <ErrorToast message={error} onClose={() => setError(null)} />}
       {/* ===== CARD WRAPPER (handles 3D flip) ===== */}
       <div
-        className="relative w-[480px] h-[580px] md:w-[550px] md:h-[660px] lg:w-[650px] lg:h-[780px] xl:w-[750px] xl:h-[900px] 2xl:w-[850px] 2xl:h-[1020px] cursor-pointer perspective"
+        className="relative w-full max-w-[90vw] h-[500px] sm:w-[480px] sm:h-[580px] md:w-[550px] md:h-[660px] lg:w-[650px] lg:h-[780px] xl:w-[750px] xl:h-[900px] 2xl:w-[850px] 2xl:h-[1020px] cursor-pointer perspective mx-auto"
         onClick={() => setFlipped(!flipped)}
       >
         <div

@@ -135,9 +135,9 @@ function LearnPageContent() {
       <div className="flex-1 lg:ml-64 p-4 lg:p-6 pt-16 lg:pt-6">
         <div className="max-w-7xl xl:max-w-[90rem] 2xl:max-w-[100rem] mx-auto">
           {/* Flashcards Section */}
-          <div className="flex justify-center items-start gap-8">
+          <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-4 lg:gap-8">
             {/* Left: Flashcards */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 w-full lg:w-auto">
               <Flashcards 
                 words={words} 
                 language={selectedLanguage} 
@@ -148,7 +148,7 @@ function LearnPageContent() {
             </div>
 
             {/* Right: Info Panel */}
-            <div className="flex-1 max-w-sm">
+            <div className="flex-1 w-full lg:max-w-sm">
               <div className="bg-white rounded-xl shadow-lg p-5 space-y-5 flex flex-col h-full">
                 {/* Progress Card */}
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-100">
