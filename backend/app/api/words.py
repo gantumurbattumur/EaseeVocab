@@ -86,13 +86,28 @@ def get_daily_words(
     
     today = date.today()
     
-    # Not logged in -> just return random words filtered by level (limit to 10)
+    # Not logged in -> use deterministic words for first 3, random for rest
     if user is None:
         print(f"👤 Guest mode: fetching {limit} words at level {level}")
-        words = get_random_words(db, limit=limit, level=level)
-        # Ensure we only return requested limit
+        
+        # For guest users, we need to determine language from request
+        # Since we don't have language in request, we'll use deterministic for first 3
+        # and random for the rest. Language-specific pre-generation will be handled
+        # by the frontend when it requests mnemonics.
+        
+        # Get deterministic first 3 words (using 'es' as default, but words are same)
+        from app.services.pre_generation import get_deterministic_words
+        deterministic_words = get_deterministic_words(db, "es", level, limit=3)
+        
+        # Get random words for the rest
+        remaining_needed = max(0, limit - len(deterministic_words))
+        random_words = get_random_words(db, limit=remaining_needed, level=level) if remaining_needed > 0 else []
+        
+        # Combine: deterministic first, then random
+        words = deterministic_words + random_words
         words = words[:limit]
-        print(f"✅ Found {len(words)} words in database")
+        
+        print(f"✅ Found {len(words)} words in database ({len(deterministic_words)} deterministic, {len(random_words)} random)")
         return DailyWordsResponse(
             date=today.isoformat(),
             count=len(words),

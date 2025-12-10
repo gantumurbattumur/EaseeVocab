@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import words, crossword, auth, mnemonic
+from app.api import words, crossword, auth, mnemonic, pre_generation
 import os
 from dotenv import load_dotenv
 
@@ -34,6 +34,7 @@ app.include_router(words.router)
 app.include_router(crossword.router)
 app.include_router(auth.router)
 app.include_router(mnemonic.router)
+app.include_router(pre_generation.router)
 
 
 @app.get("/")
