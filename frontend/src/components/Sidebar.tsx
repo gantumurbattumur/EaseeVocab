@@ -17,8 +17,14 @@ interface MenuItem {
 export default function Sidebar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -171,7 +177,41 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-gradient-to-b dark:from-gray-800 dark:via-gray-750 dark:to-gray-800 from-pink-100 via-rose-100 via-amber-100 to-yellow-100 h-screen fixed left-0 top-0 z-40 overflow-y-auto flex flex-col shadow-xl">
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gradient-to-br from-rose-400 to-pink-400 dark:bg-gray-700 text-white rounded-lg shadow-lg hover:from-rose-500 hover:to-pink-500 dark:hover:bg-gray-600 transition-all"
+        aria-label="Toggle menu"
+      >
+        {isMobileMenuOpen ? (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
+
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          w-64 bg-gradient-to-b dark:from-gray-800 dark:via-gray-750 dark:to-gray-800 from-pink-100 via-rose-100 via-amber-100 to-yellow-100 
+          h-screen fixed left-0 top-0 z-40 overflow-y-auto flex flex-col shadow-xl
+          transform transition-transform duration-300 ease-in-out
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
       {/* Logo */}
       <div className="p-4 border-b border-rose-200/50 dark:border-gray-700">
         <Link href="/" className="flex items-center gap-2">
@@ -277,5 +317,6 @@ export default function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

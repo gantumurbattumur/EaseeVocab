@@ -64,7 +64,7 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen bg-white dark:bg-slate-800">
       <Sidebar />
-      <div className="flex-1 ml-64 p-8">
+      <div className="flex-1 lg:ml-64 p-4 lg:p-8 pt-16 lg:pt-8">
         <div className="max-w-5xl mx-auto">
         {user && (
           <h1 className="text-3xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">

@@ -132,7 +132,7 @@ function LearnPageContent() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 ml-64 p-6">
+      <div className="flex-1 lg:ml-64 p-4 lg:p-6 pt-16 lg:pt-6">
         <div className="max-w-7xl xl:max-w-[90rem] 2xl:max-w-[100rem] mx-auto">
           {/* Flashcards Section */}
           <div className="flex justify-center items-start gap-8">

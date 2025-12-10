@@ -118,7 +118,7 @@ export default function WordHistoryPage() {
     return (
       <div className="min-h-screen flex bg-white dark:bg-slate-800">
         <Sidebar />
-        <div className="flex-1 ml-64 flex items-center justify-center">
+        <div className="flex-1 lg:ml-64 flex items-center justify-center pt-16 lg:pt-0">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-gray-200 dark:border-gray-700 border-t-gray-900 dark:border-t-gray-100 rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-300 text-lg">Loading word history...</p>
@@ -131,7 +131,7 @@ export default function WordHistoryPage() {
   return (
     <div className="min-h-screen flex bg-white dark:bg-slate-800">
       <Sidebar />
-      <div className="flex-1 ml-64 p-6">
+      <div className="flex-1 lg:ml-64 p-4 lg:p-6 pt-16 lg:pt-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
