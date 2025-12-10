@@ -1,0 +1,58 @@
+name: Pre-Generate Mnemonics
+
+on:
+  schedule:
+    # Runs daily at midnight UTC (adjust timezone if needed)
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # Allows manual triggering from GitHub Actions tab
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/app/services/pre_generation.py'
+      - 'backend/app/scripts/pre_generate_daily.py'
+      - '.github/workflows/pre-generate.yml'
+
+jobs:
+  pre-generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Pre-generation should complete within 30 minutes
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pre-generation
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Add other environment variables if needed
+          # CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+        run: |
+          python -m app.scripts.pre_generate_daily
+
+      - name: Report completion
+        if: success()
+        run: |
+          echo "✅ Pre-generation completed successfully!"
+          echo "📊 Check Railway logs or API status endpoint for details"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ Pre-generation failed!"
+          echo "Check the logs above for error details"
+
