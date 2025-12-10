@@ -47,7 +47,7 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
-  // Load words
+  // Load words and pre-generated images for first 3 cards
   useEffect(() => {
     setCards(words || []);
     const resetIndex = 0;
@@ -56,7 +56,80 @@ export default function Flashcards({ words, language, onIndexChange, currentInde
     } else {
       setInternalIndex(resetIndex);
     }
-  }, [words, onIndexSet]);
+
+    // Auto-load pre-generated images for first 3 cards
+    if (words && words.length > 0) {
+      const loadPreGeneratedImages = async () => {
+        const firstThree = words.slice(0, 3);
+        const updatedCards = [...words];
+
+        for (let i = 0; i < firstThree.length; i++) {
+          const card = firstThree[i];
+          const translation = language === "es" ? card.translation_es : card.translation_fr;
+          
+          if (!translation) continue;
+
+          try {
+            // First check if text is cached
+            const textData = await api("/mnemonic/generate-text", {
+              method: "POST",
+              body: JSON.stringify({
+                word: translation,
+                definition: card.definition,
+                language: language,
+              }),
+            });
+
+            // If text is cached, check for image
+            if (textData.cached && textData.mnemonic_sentence) {
+              try {
+                const imageData = await api("/mnemonic/generate-image", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    word: translation,
+                    definition: card.definition,
+                    mnemonic_sentence: textData.mnemonic_sentence,
+                    language: language,
+                  }),
+                });
+
+                // Update card with both text and image if available
+                updatedCards[i] = {
+                  ...card,
+                  mnemonic_word: textData.mnemonic_word,
+                  mnemonic_sentence: textData.mnemonic_sentence,
+                  image_url: imageData.image_base64 
+                    ? `data:image/png;base64,${imageData.image_base64}`
+                    : undefined,
+                };
+              } catch (imgErr) {
+                // Image not cached, but text is - still load text
+                updatedCards[i] = {
+                  ...card,
+                  mnemonic_word: textData.mnemonic_word,
+                  mnemonic_sentence: textData.mnemonic_sentence,
+                };
+              }
+            }
+          } catch (err) {
+            // If not cached or error, that's fine - user can generate manually
+            console.log(`Pre-generated content not found for card ${i}, will generate on demand`);
+          }
+        }
+
+        // Only update if we found any pre-generated content
+        const hasUpdates = updatedCards.some((card, i) => 
+          i < 3 && (card.mnemonic_word || card.image_url)
+        );
+
+        if (hasUpdates) {
+          setCards(updatedCards);
+        }
+      };
+
+      loadPreGeneratedImages();
+    }
+  }, [words, onIndexSet, language]);
 
   // Reset flipped state when index changes
   useEffect(() => {
