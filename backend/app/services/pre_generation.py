@@ -24,27 +24,29 @@ def _hash_string(s: str) -> str:
 
 def get_deterministic_words(
     db: Session,
-    language: str,
+    language: str,  # Not used for selection, only for documentation
     level: str,
     limit: int = 3
 ) -> List[Vocabulary]:
     """
-    Get deterministic words for a language/level combination.
-    Uses date + language + level as seed to ensure same words for everyone.
+    Get deterministic words for a level.
+    Uses date + level as seed to ensure same English words for everyone.
+    Language doesn't affect word selection - only affects which translation/mnemonic to use.
     
     Args:
         db: Database session
-        language: Language code ('es' or 'fr')
+        language: Language code ('es' or 'fr') - not used for selection, kept for API compatibility
         level: Difficulty level ('a1', 'a2', 'b1', 'b2')
         limit: Number of words to return (default 3)
     
     Returns:
-        List of Vocabulary objects
+        List of Vocabulary objects (same English words regardless of language)
     """
     today = date.today()
     
-    # Create a deterministic seed from date + language + level
-    seed_string = f"{today.isoformat()}-{language}-{level}"
+    # Create a deterministic seed from date + level only
+    # Language doesn't affect which English words are selected
+    seed_string = f"{today.isoformat()}-{level}"
     seed_hash = int(hashlib.md5(seed_string.encode()).hexdigest(), 16)
     
     # Get all words for this level

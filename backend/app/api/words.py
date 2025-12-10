@@ -90,24 +90,42 @@ def get_daily_words(
     if user is None:
         print(f"👤 Guest mode: fetching {limit} words at level {level}")
         
-        # Get deterministic first 3 words (same English words for everyone, regardless of language)
-        # The language-specific mnemonics are pre-generated separately
+        # Get language from request if available, default to 'es'
+        # Note: The frontend should pass language in the request
+        # For now, we'll use a default, but deterministic words are same regardless of language
+        # (the mnemonics are language-specific, but the English words are the same)
         from app.services.pre_generation import get_deterministic_words
+        
+        # Use 'es' for deterministic selection (words are same, mnemonics differ by language)
         deterministic_words = get_deterministic_words(db, "es", level, limit=3)
+        print(f"📌 Deterministic words for level {level}: {[w.word for w in deterministic_words]}")
         
-        # Get random words for the rest (words 4-10)
-        remaining_needed = max(0, limit - len(deterministic_words))
-        random_words = get_random_words(db, limit=remaining_needed + 10, level=level) if remaining_needed > 0 else []
+        if len(deterministic_words) < 3:
+            print(f"⚠️ Warning: Only got {len(deterministic_words)} deterministic words, filling with random")
+            # Fallback to random if deterministic fails
+            words = get_random_words(db, limit=limit, level=level)
+        else:
+            # Get random words for the rest (words 4-10)
+            remaining_needed = max(0, limit - len(deterministic_words))
+            
+            if remaining_needed > 0:
+                # Get extra random words to avoid duplicates
+                random_words = get_random_words(db, limit=remaining_needed + 20, level=level)
+                
+                # Remove duplicates (in case deterministic words appear in random)
+                deterministic_ids = {w.id for w in deterministic_words}
+                random_words = [w for w in random_words if w.id not in deterministic_ids]
+                
+                # Combine: deterministic first, then random
+                words = deterministic_words + random_words[:remaining_needed]
+            else:
+                words = deterministic_words
+            
+            words = words[:limit]
         
-        # Remove duplicates (in case deterministic words appear in random)
-        deterministic_ids = {w.id for w in deterministic_words}
-        random_words = [w for w in random_words if w.id not in deterministic_ids]
+        print(f"✅ Found {len(words)} words in database ({len(deterministic_words)} deterministic)")
+        print(f"   First 3 words: {[w.word for w in words[:3]]}")
         
-        # Combine: deterministic first, then random
-        words = deterministic_words + random_words[:remaining_needed]
-        words = words[:limit]
-        
-        print(f"✅ Found {len(words)} words in database ({len(deterministic_words)} deterministic, {len(random_words[:remaining_needed])} random)")
         return DailyWordsResponse(
             date=today.isoformat(),
             count=len(words),
