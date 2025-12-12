@@ -1,6 +1,7 @@
 import "./globals.css";
 import Script from "next/script";
 import React from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -34,6 +35,7 @@ export default function RootLayout({
             {children}
           </ErrorBoundary>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
