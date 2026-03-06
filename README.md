@@ -1,5 +1,6 @@
-# EaseeVocab 🎓
+![easeevocab](https://github.com/user-attachments/assets/11d07f19-839c-4aac-81df-d238aee1e10d)
 
+# EaseeVocab 🎓
 Learn English vocabulary with ease using mnemonic techniques, sound-a-like words, and visual stories.
 
 ## ✨ Features
